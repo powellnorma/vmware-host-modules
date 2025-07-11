@@ -1,5 +1,6 @@
 /*********************************************************
- * Copyright (C) 1998,2017,2019-2022 VMware, Inc. All rights reserved.
+ * Copyright (c) 1998,2017,2019-2024 Broadcom. All Rights Reserved.
+ * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -546,14 +547,18 @@ VNetCsumAndCopyToUser(const void *src,   // IN: Source
 
 #if COMPAT_LINUX_VERSION_CHECK_LT(5, 10, 0)
    csum = csum_and_copy_to_user(src, dst, len, 0, err);
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 19, 0)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 19, 0) && !defined(RHEL85_BACKPORTS)
    csum = csum_and_copy_to_user(src, dst, len);
    *err = (csum == 0) ? -EFAULT : 0;
 #else
-   csum = csum_partial(src, len, ~0U);
-   if (copy_to_user(dst, src, len))
+   if (!user_access_begin(dst, len)) {
+      *err = -EFAULT;
       csum = 0;
-   *err = (csum == 0) ? -EFAULT : 0;
+   } else {
+      *err = 0;
+      csum = csum_partial_copy_nocheck(src, dst, len);
+      user_access_end();
+   }
 #endif
    return csum;
 }
