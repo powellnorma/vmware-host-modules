@@ -71,7 +71,7 @@
 #endif
 
 #if LOGLEVEL >= 4
-static struct timeval vnetTime;
+static u64 vnetTime;
 #endif
 
 typedef struct VNetBridge VNetBridge;
@@ -695,7 +695,7 @@ VNetBridgeReceiveFromVNet(VNetJack        *this, // IN: jack
          netif_rx(clone);
 #endif
 #	 if LOGLEVEL >= 4
-	 do_gettimeofday(&vnetTime);
+	 vnetTime = ktime_get_ns();
 #	 endif
       }
    }
@@ -811,12 +811,14 @@ static Bool
 VNetBridgeIsDeviceWireless(struct net_device *dev) //IN: sock
 {
 #if defined(CONFIG_WIRELESS_EXT)
-   return dev->ieee80211_ptr != NULL || dev->wireless_handlers != NULL;
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 19, 0) || IS_ENABLED(CONFIG_CFG80211)
-   return dev->ieee80211_ptr != NULL;
-#else
-   return FALSE;
+   if (dev->wireless_handlers)
+      return TRUE;
 #endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 19, 0) || IS_ENABLED(CONFIG_CFG80211)
+   if (dev->ieee80211_ptr)
+      return TRUE;
+#endif
+   return FALSE;
 }
 
 
@@ -1494,12 +1496,11 @@ VNetBridgeReceiveFromDev(struct sk_buff *skb,         // IN: packet to receive
 
 #  if LOGLEVEL >= 4
    {
-      struct timeval now;
-      do_gettimeofday(&now);
+      u64 now;
+
+      now = ktime_get_ns();
       LOG(3, (KERN_DEBUG "bridge-%s: time %d\n",
-	      bridge->name,
-	      (int)((now.tv_sec * 1000000 + now.tv_usec)
-                    - (vnetTime.tv_sec * 1000000 + vnetTime.tv_usec))));
+	      bridge->name, (int)((now - vnetTime) / NSEC_PER_USEC)));
    }
 #  endif
 

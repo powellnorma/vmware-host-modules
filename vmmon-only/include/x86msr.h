@@ -25,6 +25,7 @@
 
 #ifndef _X86MSR_H_
 #define _X86MSR_H_
+#include <asm/msr-index.h>
 #define INCLUDE_ALLOW_USERLEVEL
 #define INCLUDE_ALLOW_VMX
 
@@ -65,9 +66,9 @@ typedef struct MSRReply {
 
 #pragma pack(push, 1)
 typedef struct MSRQuery {
-   uint32 msrNum;                                     // IN
-   uint32 numLogicalCPUs;                             // IN/OUT
-   MSRReply logicalCPUs[] COUNTED_BY(numLogicalCPUs); // OUT
+   uint32 msrNum;           // IN
+   uint32 numLogicalCPUs;   // IN/OUT
+   MSRReply logicalCPUs[]; // OUT
 } MSRQuery;
 #pragma pack(pop)
 
@@ -1085,7 +1086,11 @@ typedef unsigned char MTRRType;
 /*
  * MISC_FEATURES_ENABLES bits
  */
+#ifdef MSR_MISC_FEATURES_ENABLES_CPUID_FAULT
+#define MSR_MISC_FEATURES_ENABLES_CPUID_FAULTING MSR_MISC_FEATURES_ENABLES_CPUID_FAULT
+#else
 #define MSR_MISC_FEATURES_ENABLES_CPUID_FAULTING 1
+#endif
 
 
 

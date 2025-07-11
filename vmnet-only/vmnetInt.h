@@ -1,6 +1,5 @@
 /*********************************************************
- * Copyright (c) 1998-2025 Broadcom. All Rights Reserved.
- * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+ * Copyright (C) 1998, 2017 VMware, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,14 +41,14 @@
     compat_skb_set_network_header(skb, sizeof (struct ethhdr)),  \
     dev_queue_xmit(skb)                                   \
   )
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0) || defined(RHEL90_BACKPORTS)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
 #   define dev_lock_list()    rcu_read_lock()
 #   define dev_unlock_list()  rcu_read_unlock()
 #else
 #   define dev_lock_list()    read_lock(&dev_base_lock)
 #   define dev_unlock_list()  read_unlock(&dev_base_lock)
 #endif
+
 
 extern struct proto vmnet_proto;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0) || defined(sk_net_refcnt)
